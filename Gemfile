@@ -4,8 +4,15 @@ source 'https://rubygems.org'
 gemspec
 
 group :test, :development do
-  gem 'omniauth'
-  gem 'google-id-token'
-  gem 'multi_json' # For testing
+  gem 'googleauth'
   gem 'jwt' # For testing
+  gem 'multi_json' # For testing
+  gem 'omniauth'
+
+  gem 'coveralls_reborn'
+  gem 'rack-test'
+  gem 'rest-client', '~> 1.8.0'
+  gem 'rubocop', require: false
+  gem 'simplecov-lcov'
+  gem 'webmock'
 end
