@@ -1,3 +1,8 @@
+# I didn't update readme, please read source to see the options
+
+`lib/omniauth/strategies/google_id_token.rb`
+
+
 # OmniAuth::GoogleIdToken
 
 A [omnitauth](https://github.com/omniauth/omniauth) strategy primarily used for validating Google ID tokens
