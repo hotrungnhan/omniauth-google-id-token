@@ -4,7 +4,6 @@ source 'https://rubygems.org'
 gemspec
 
 group :test, :development do
-  gem 'googleauth'
   gem 'jwt' # For testing
   gem 'multi_json' # For testing
   gem 'omniauth'

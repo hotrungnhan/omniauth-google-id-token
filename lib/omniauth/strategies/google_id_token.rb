@@ -11,16 +11,13 @@ module OmniAuth
         OmniAuth::Strategy.included(subclass)
       end
 
-      BASE_SCOPES = %w[profile email openid].freeze
       RESPONSE_TYPES = %w[token id_token].freeze
 
       option :name, 'google_id_token'
-      option :uid_claim, 'sub'
       option :client_id, nil # Required for request_phase e.g. redirect to auth page
-      option :aud_claim, nil
-      option :azp_claim, nil
-      option :iss_claim, nil
+      option :uid_claim, 'sub'
       option :required_claims, %w[email]
+      option :scope, %w[profile email openid].freeze
       option :info_map, { 'name' => 'name', 'email' => 'email' }
 
       def request_phase
@@ -31,7 +28,7 @@ module OmniAuth
 
       def authorize_params # rubocop:disable Metrics/AbcSize
         params = {}
-        params[:scope] = BASE_SCOPES.join(' ')
+        params[:scope] = options.scope.join(' ')
         params[:access_type] = 'offline'
         params[:include_granted_scopes] = true
         params[:state] = SecureRandom.hex(24)
@@ -42,13 +39,13 @@ module OmniAuth
         params
       end
 
-      def decoded # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
-        unless @decoded
-          begin
-            @decoded = validator.verify_oidc(request.params['id_token'], aud: options.aud_claim, azp: options.azp_claim)
-          rescue StandardError => e
-            raise ClaimInvalid, e.message
-          end
+      def decoded # rubocop:disable Metrics/AbcSize
+        raise ClaimInvalid, 'Token not found!' unless request.params.key?('id_token')
+
+        begin
+          @decoded = ::Google::Auth::IDTokens.verify_oidc(request.params['id_token'], aud: options.client_id)
+        rescue StandardError => e
+          raise ClaimInvalid, e.message
         end
 
         (options.required_claims || []).each do |field|
@@ -78,10 +75,6 @@ module OmniAuth
       end
 
       private
-
-      def validator
-        ::Google::Auth::IDTokens::Verifier
-      end
 
       def uid_lookup
         @uid_lookup ||= options.uid_claim.new(request)

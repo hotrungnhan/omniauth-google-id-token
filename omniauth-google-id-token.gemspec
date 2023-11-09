@@ -24,5 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.7'
 
   spec.add_runtime_dependency 'googleauth', '~> 1.8.1'
-  spec.add_runtime_dependency 'omniauth', '~> 1.9.2'
+  spec.add_runtime_dependency 'omniauth', '~> 2.1.1'
 end

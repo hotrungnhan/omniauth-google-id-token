@@ -11,7 +11,7 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
   let(:payload) do
     { 'iss' => 'https://accounts.google.com',
       'nbf' => 161_803_398_874,
-      'aud' => 'http://example.com',
+      'aud' => 'test_client_id',
       'sub' => '3141592653589793238',
       'hd' => 'gmail.com',
       'email' => 'bob@example.com',
@@ -25,16 +25,16 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
       'exp' => 1_596_477_600,
       'jti' => 'abc161803398874def' }
   end
-  let(:aud_claim) { payload[:aud] }
+  let(:client_id) { payload[:aud] }
   let(:azp_claim) { payload[:azp] }
 
-  let(:client_id) { 'test_client_id' }
   let(:args) do
     [
       {
         aud_claim: payload[:aud],
         azp_claim: payload[:azp],
-        client_id: client_id
+        client_id: client_id,
+        provider_ignores_state: true
       }
     ]
   end
@@ -59,6 +59,9 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
   end
 
   describe 'request phase' do
+    before do
+      OmniAuth::AuthenticityTokenProtection.default_options(key: 'csrf.token', authenticity_param: '_csrf')
+    end
     it 'should redirect to the configured login url' do
       post api_url
       expect(last_response.status).to eq(302)
@@ -70,8 +73,8 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
 
   context 'callback phase' do
     it 'should decode the response' do
-      allow(::Google::Auth::IDTokens::Verifier).to receive(:verify_oidc)
-        .with(id_token, aud: aud_claim, azp: azp_claim)
+      allow(::Google::Auth::IDTokens).to receive(:verify_oidc)
+        .with(id_token, aud: client_id)
         .and_return(payload)
 
       post "#{api_url}/callback", id_token: id_token
@@ -80,8 +83,8 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
 
     it 'should not work without required fields' do
       payload.delete('email')
-      allow(::Google::Auth::IDTokens::Verifier).to receive(:verify_oidc)
-        .with(id_token, aud: aud_claim, azp: azp_claim)
+      allow(::Google::Auth::IDTokens).to receive(:verify_oidc)
+        .with(id_token, aud: client_id)
         .and_return(payload)
 
       post "#{api_url}/callback", id_token: id_token
@@ -89,8 +92,8 @@ describe OmniAuth::Strategies::GoogleIdToken do # rubocop:disable Metrics/BlockL
     end
 
     it 'should assign the uid' do
-      allow(::Google::Auth::IDTokens::Verifier).to receive(:verify_oidc)
-        .with(id_token, aud: aud_claim, azp: azp_claim)
+      allow(::Google::Auth::IDTokens).to receive(:verify_oidc)
+        .with(id_token, aud: client_id)
         .and_return(payload)
       post "#{api_url}/callback", id_token: id_token
       expect(response_json['uid']).to eq('3141592653589793238')
