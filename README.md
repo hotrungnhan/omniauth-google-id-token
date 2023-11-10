@@ -1,4 +1,4 @@
-# I didn't update readme, please read source to see the options
+# I haven't update readme yet, please read source to see the options
 
 `lib/omniauth/strategies/google_id_token.rb`
 
