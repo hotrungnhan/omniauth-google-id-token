@@ -1,4 +1,4 @@
-# I haven't update readme yet, please read source to see the options
+# I haven't update readme yet, please read source make sure you use right option.
 
 `lib/omniauth/strategies/google_id_token.rb`
 
@@ -36,7 +36,21 @@ Or install it yourself as:
 You use OmniAuth::Strategies::GoogleIdToken just like you do any other OmniAuth strategy:
 
 ```ruby
-use OmniAuth::Strategies::GoogleIdToken, aud_claim: '123.apps.googleusercontent.com', azp_claim: '123.apps.googleusercontent.com'
+Rails.application.config.middleware.use OmniAuth::Builder do
+  provider :developer, :callback_path => "/nexus-api/auth/developer/callback", provider_ignores_state: true if Rails.env.development?
+  # provider :google-oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], scope: 'email, profile', provider_ignores_state: true , :callback_path => "/nexus-api/auth/google-oauth2/callback"
+    
+  
+  provider :'google-id-token', client_id: ENV['GOOGLE_CLIENT_ID']
+  # or
+  # to rename the provider
+  use OmniAuth::Strategies::GoogleIdToken,name: "google-oauth2",  client_id: ENV['GOOGLE_CLIENT_ID']
+  
+  
+end
+
+OmniAuth.config.allowed_request_methods = %i[get post]
+
 ```
 
 If this strategy is used primarily for validating a Google ID token, then the only required fields are
@@ -50,34 +64,28 @@ response section.
 * **name:** The name of the strategy. The default name is `google_id_token` but it can be changed to any value, for
   example `google`. The OmniAuth URL will thus change to `/auth/google` and the `provider` key in the auth hash will
   then return `google`.
-* **cert:** the x509 certificate can be provided to manually define a certificate to validate the tokens.
-* **expiry:** Expiry defines the the time (in seconds) in which the cached Google certificates are valid.
 * **uid_claim:** this determines which claim will be used to uniquely identify the user. Defaults
-  to `email`
+  to `sub`
 * **client_id:** The client ID string that you obtain from the [API Console](https://console.developers.google.com/),
   as described in [Obtain OAuth 2.0 credentials](https://developers.google.com/identity/protocols/OpenIDConnect#getcredentials)
-* **aud_claim:** Identifies the audience that this ID token is intended for. It must be one of the OAuth 2.0 client
-  IDs of your application
-* **azp_claim:** The client_id of the authorized presenter. This claim is only needed when the party requesting the
-  ID token is not the same as the audience of the ID token. This may be the case at Google for hybrid apps where a
-  web application and Android app have a different client_id but share the same project.
 * **required_claims:** array of claims that are required to make this a valid authentication call.
   Defaults to `['name', 'email']`
+* **scope:** array of request data in google api. Defaults to `['name', 'email', 'openid']`
 * **info_map:** array mapping claim values to info hash values. Defaults to mapping `name` and `email`
   to the same in the info hash.
 
 ### Authentication Process
 
-When you authenticate through `omniauth-google-id-token` you can send users to `/auth/googleidtoken`
+When you authenticate through `omniauth-google-id-token` you can send users to `/auth/google-id-token`
 and it will redirect them to the URL https://accounts.google.com/o/oauth2/auth (and example can be
 found at https://developers.google.com/identity/protocols/OAuth2WebServer#handlingresponse
 Sample OAuth 2.0 server response).
 
 From there, Google generates a ID token and sends to the redirect_uri passed in URL query params.
-The redirect_uri will look like '/auth/googleidtoken/callback`. This is the endpoint to send the id token
+The redirect_uri will look like '/auth/google-id-token/callback`. This is the endpoint to send the id token
 to if coming from a mobile or web app looking to validate a user with the backend server:
 
-    /auth/googleidtoken/callback?id_token=ENCODEDJWTGOESHERE
+    /auth/google-id-token/callback?id_token=ENCODEDJWTGOESHERE
 
 ## Contributing
 
